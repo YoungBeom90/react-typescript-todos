@@ -1,17 +1,31 @@
 import styled from 'styled-components';
-import { useRecoilState, useRecoilValue } from 'recoil';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import CreateToDo from './CreateToDo';
-import { categoryState, toDoSelector, toDoState } from '../atoms';
+import { categoryState, IToDo, toDoSelector, toDoState } from '../atoms';
 import ToDo from './ToDo';
 import {Categories} from '../atoms';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons';
+import { eventNames } from 'process';
+
+
 
 const ToDoList = () => {
     const toDos = useRecoilValue(toDoSelector);
+    const setToDoList  = useSetRecoilState(toDoState);
     const [category, setCategory] = useRecoilState(categoryState);
     const onInput = (event:React.FormEvent<HTMLSelectElement>) => {
         setCategory(event.currentTarget.value as any);
     }
     console.log(toDos);
+
+    const onClick = (event:React.MouseEvent<SVGSVGElement>) => {
+        const target = event.currentTarget?.parentElement;
+        const targetKey = target?.getAttribute("data-id");
+        const index = toDos?.findIndex((toDo : any) => toDo.id === Number(targetKey));
+        const newList = removeItemAtIndex(toDos!, index!);
+        setToDoList(newList);
+    } 
     return (
         <div>
             <h1>To Dos</h1>
@@ -22,10 +36,26 @@ const ToDoList = () => {
                 <option value={Categories.DONE}>Done</option>
             </select>
             <CreateToDo />
-            {toDos?.map((toDo) => <ToDo key={toDo.id} {...toDo}/>)}
+            {
+               category === Categories.DONE 
+                ? toDos?.map((toDo : any, key : number) =>
+                       <DoneDiv key={key} data-id={toDo.id}>
+                           <ToDo key={toDo.id} {...toDo}/>
+                           <TrashIcon onClick={onClick} icon={faTrashCan} key={key} />
+                       </DoneDiv>
+                    )
+                : toDos?.map((toDo : any) => <ToDo key={toDo.id} {...toDo}/>)
+            }
         </div>
     )
 };
+
+const removeItemAtIndex = (toDos: IToDo[], index: number) => {
+    let afterDeletion = [...toDos.slice(0, index), ...toDos.slice(index + 1)];
+    console.log(afterDeletion);
+    localStorage.setItem("toDos", JSON.stringify(afterDeletion));
+    return afterDeletion;
+}
 
 // interface IForm {
 //     email: string;
@@ -105,5 +135,15 @@ const ToDoList = () => {
 const ErrorMessage = styled.span`
     color: red;
 `
+
+const DoneDiv = styled.div`
+    display: flexbox;
+`
+const TrashIcon = styled(FontAwesomeIcon)`
+    margin: 2px 10px;
+    cursor: pointer;
+    
+`
+
 
 export default ToDoList;

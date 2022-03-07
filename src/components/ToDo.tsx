@@ -1,6 +1,7 @@
 import {IToDo, toDoState} from './../atoms';
 import { useSetRecoilState } from 'recoil';
 import {Categories} from '../atoms';
+import React from "react";
 
 const ToDo = ({text, category, id} : IToDo) => {
     const setToDos = useSetRecoilState(toDoState);
@@ -10,8 +11,8 @@ const ToDo = ({text, category, id} : IToDo) => {
             currentTarget: { name }
         } = event;
 
-        setToDos(oldToDos => {
-            const targetIndex = oldToDos.findIndex(toDo => toDo.id === id);
+        setToDos((oldToDos : any) => {
+            const targetIndex = oldToDos.findIndex((toDo : any) => toDo.id === id);
             const oldToDo = oldToDos[targetIndex];
             const newToDo = {
                 text,
@@ -20,11 +21,15 @@ const ToDo = ({text, category, id} : IToDo) => {
             };
             console.log(oldToDo, newToDo);
 
-            return [
+            let result = [
                 ...oldToDos.slice(0, targetIndex),
                 newToDo,
                 ...oldToDos.slice(targetIndex + 1)
             ];
+
+            localStorage.setItem("toDos", JSON.stringify(result));
+
+            return result;
         });
 
     }
