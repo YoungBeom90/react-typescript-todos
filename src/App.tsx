@@ -4,10 +4,11 @@ import styled from "styled-components";
 import {useRecoilState} from "recoil";
 import {toDoState} from "./atoms";
 import Board from "./Components/Board";
+import Trash from "./Components/Trash";
 
 const Wrapper = styled.div`
   display: flex;
-  max-width: 680px;
+  max-width: 80%;
   width: 100%;
   margin: auto;
   justify-content: center;
@@ -41,44 +42,67 @@ const App = () => {
 
         const {destination, draggableId, source} = info;
 
-        if(!destination) return;
+        console.log(destination?.droppableId);
 
+        if(!destination) return;
+        let newToDos;
         if(destination.droppableId === source.droppableId) {
             setToDos((allBoards) => {
                 const boardCopy = [...allBoards[source.droppableId]];
                 const taskObj = boardCopy[source.index];
                 boardCopy.splice(source.index, 1);
                 boardCopy.splice(destination.index, 0, taskObj);
-                return {
+
+                newToDos = {
                     ...allBoards,
                     [source.droppableId] : boardCopy
                 }
-            })
+
+                return newToDos;
+            });
+
+            localStorage.setItem("toDoList", JSON.stringify(newToDos));
+
         }
 
         if(destination.droppableId !== source.droppableId) {
 
-            setToDos((allBoards) => {
-                const sourceBoard = [...allBoards[source.droppableId]];
-                const taskObj = sourceBoard[source.index];
-                const destinationBoard = [...allBoards[destination.droppableId]];
-                sourceBoard.splice(source.index, 1);
-                destinationBoard.splice(destination.index, 0 , taskObj);
-                return {
-                    ...allBoards,
-                    [source.droppableId]: sourceBoard,
-                    [destination.droppableId]: destinationBoard,
-                }
-                // const boardCopy = [...allBoards[source.droppableId]]
-                // boardCopy.splice(source.index, 1).shift();
-                // boardCopy.splice(destination?.index, 0, draggableId);
-                //
-                // return {
-                //     ...allBoards,
-                //     [source.droppableId]: boardCopy
-                // };
+            if(destination.droppableId === "Trash") {
+                setToDos((allBoards) => {
+                    const sourceBoard = [...allBoards[source.droppableId]];
+                    const taskObj = sourceBoard[source.index];
 
-            });
+                    let anotherToDos = sourceBoard.filter((toDo) => toDo.id !== taskObj.id)
+
+                    newToDos = {
+                        ...allBoards,
+                        [source.droppableId] : anotherToDos
+                    }
+
+                    return newToDos;
+                })
+
+
+            } else {
+                setToDos((allBoards) => {
+                    const sourceBoard = [...allBoards[source.droppableId]];
+                    const taskObj = sourceBoard[source.index];
+                    const destinationBoard = [...allBoards[destination.droppableId]];
+                    sourceBoard.splice(source.index, 1);
+                    destinationBoard.splice(destination.index, 0 , taskObj);
+
+                    newToDos = {
+                        ...allBoards,
+                        [source.droppableId]: sourceBoard,
+                        [destination.droppableId]: destinationBoard,
+                    }
+                    return newToDos;
+
+                });
+
+            }
+                localStorage.setItem("toDoList", JSON.stringify(newToDos));
+
         }
     }
 
@@ -87,8 +111,9 @@ const App = () => {
       <DragDropContext onDragEnd={onDragEnd}>
           <Wrapper>
               <Boards>
-                  {Object.keys(toDos).map(boardId => <Board toDos={toDos[boardId]} boardId={boardId} />)}
+                  {Object.keys(toDos).map((boardId, key) => boardId!=="Trash" && <Board key={key} toDos={toDos[boardId]} boardId={boardId} />)}
               </Boards>
+              <Trash boardId="Trash"/>
           </Wrapper>
       </DragDropContext>
   );

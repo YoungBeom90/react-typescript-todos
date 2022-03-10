@@ -1,10 +1,11 @@
-import React, {useRef} from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import {Droppable} from "react-beautiful-dnd";
 import styled from "styled-components";
 import DraggableCard from "./DraggableCard";
 import {IToDo, toDoState} from "../atoms";
 import {useSetRecoilState} from "recoil";
+// import {RecoilLoadable, useSetRecoilState} from "recoil";
 
 const Wrapper = styled.div`
   padding-top: 10px;
@@ -50,18 +51,24 @@ interface IForm {
 
 const Board = ({toDos, boardId} : IBoardProps) => {
     const setToDos = useSetRecoilState(toDoState);
+
     const {register, setValue, handleSubmit} = useForm<IForm>();
     const onValid = ({toDo}: IForm) => {
         const newToDo = {
             id: Date.now(),
             text: toDo
         }
+        let newToDos;
         setToDos((allBoards) => {
-            return {
+
+            newToDos = {
                 ...allBoards,
                 [boardId]: [newToDo, ...allBoards[boardId]]
             }
+            return newToDos;
         });
+        localStorage.setItem("toDoList", JSON.stringify(newToDos));
+
         setValue('toDo', "");
     }
     return (
@@ -88,7 +95,9 @@ const Board = ({toDos, boardId} : IBoardProps) => {
                                     key={toDo.id}
                                     toDoId={toDo.id}
                                     toDoText={toDo.text}
-                                    index={index} />
+                                    boardId={boardId as any}
+                                    index={index}
+                                />
                             )
                         }
                         {magic.placeholder}
